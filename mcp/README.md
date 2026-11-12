@@ -2,12 +2,18 @@
 
 **English** · [Italiano](README.it.md)
 
-Technical name: `music-studio-mcp-for-ace-step` · Version **1.0.0**
+Technical name: `music-studio-mcp-for-ace-step` · Version **1.1.0**
 
 An [MCP](https://modelcontextprotocol.io) server that lets an AI agent create music with ACE-Step 1.5 on your PC.
-You describe the song in the chat; the agent asks a few questions (style, vocals, language, approximate length,
-loop…), writes the style tags and the lyrics, shows you a summary, and after your OK generates the song through the
+You describe the song in the chat; the agent asks which mode to use (Simple, Custom, Remix, Repaint…), asks a few
+questions (style, vocals, language, approximate length, loop, audio files…), writes the style tags and the lyrics,
+shows you a summary, asks the file name and, after your OK, generates the song through the
 **Music Studio for ACE-Step** app.
+
+> [!TIP]
+> **Exclusive to this MCP: songs that loop seamlessly.** ACE-Step and the app cannot make them (ACE-Step fades out at
+> the end even when asked for a loop); with the MCP you ask for a song "that loops forever" and get one `.wav` whose
+> end flows into its beginning — see [Seamless loops](#seamless-loops).
 
 ## Supported agents
 
@@ -107,16 +113,45 @@ Zed uses `"context_servers"` with `"source": "custom"`. `uv run mcp\install.py -
 ## How to use it
 
 1. Open Music Studio for ACE-Step and wait for the ACE-Step page.
-2. Ask the agent, for example:
-   - *"Make me a 1-minute relaxing lo-fi track to study with"*
+2. Ask the agent in your own words — no special command is needed, for example:
+   - *"Use Music Studio to make me a 1-minute relaxing lo-fi track to study with"*
    - *"Write and generate an Italian pop song about summer, female voice, about 2 minutes"*
-   - *"Background music for a platformer level, chiptune, it must loop forever"*
-3. The agent checks ACE-Step, then asks what is still missing — style, mood, instruments, vocals and language,
-   **approximate length with the maximum in brackets** (e.g. *"Length? (max 8 min)"*, or let ACE-Step choose),
-   **seamless loop** (optional), tempo/key, number of versions. Clients that support MCP forms show a form; the others
-   ask in the chat.
-4. It shows a summary table; after your OK it generates (a 30–60 s song takes about a minute) and tells you where
-   the file is: ACE-Step's `gradio_outputs\mcp_<date>_<time>\` folder (*Open generated songs folder* in the app menu).
+   - *"Remix C:\Music\my-song.mp3 as an acoustic folk version"*
+3. The agent checks ACE-Step and asks which **mode** to use (it skips the question when your request already says it).
+4. It asks only the questions of that mode — style, vocals and language, **approximate length with the maximum in
+   brackets** (e.g. *"Length? (max 8 min)"*, or let ACE-Step choose), optional **seamless loop**, tempo/key,
+   number of versions, and the audio files the mode needs.
+5. It shows a summary table and waits for your OK; then, as the **last question**, it asks the **file name**.
+6. It generates (a 30–60 s song takes about a minute; the app shows a progress window) and tells you where the
+   files are.
+
+### Modes
+
+| Mode | What it does | Needs |
+|---|---|---|
+| **Simple** | Describe the song in your own words; ACE-Step writes style, lyrics, length, tempo and key | — |
+| **Custom** | Full control: style, lyrics, length, tempo, key | optional **reference audio** to imitate its sound |
+| **Remix** | Turns an existing song into another style, keeping its structure/melody (faithfulness 0.2 loose – 0.8 faithful) | a **source song** |
+| **Repaint** | Regenerates only a time range (from second X to second Y) and keeps the rest | a **source song** |
+| **Extract** | Isolates one instrument or the vocals | a source song, **base model** only |
+| **Lego** | Adds or replaces one track (e.g. drums) | a source song, **base model** only |
+| **Complete** | Adds the missing instruments to a partial song | a source song, **base model** only |
+
+Extract, Lego and Complete appear only when ACE-Step runs a *base* model (the turbo model offers the first four).
+
+### Audio files (source song, reference audio)
+
+The agent cannot read files attached to the chat: **paste the full path** of the file when it asks, e.g.
+`C:\Users\Name\Music\song.mp3` (in a terminal-based agent you can drag the file into the window and the path is
+typed for you). You can also ask the agent to **list your recent songs** and pick one of them as the source.
+
+### File names and where the songs are saved
+
+ACE-Step names files with random codes; the server renames the song with the name you choose. One song = **one
+file**, `<name>.mp3` (`<name>.wav` for a loop). Only if you ask for more versions of the same song are the others
+called `<name>_2.mp3`, `<name>_3.mp3`, … They are saved in ACE-Step's output folder,
+in `gradio_outputs\mcp_<date>_<time>_<name>\` (with ACE-Step's side files); the agent tells you the full path, and
+*Open generated songs folder* in the app menu opens `gradio_outputs`.
 
 Some clients also offer the ready-made prompt **compose_song** (in Claude Code: `/mcp__music-studio-mcp-for-ace-step__compose_song`).
 
@@ -137,19 +172,22 @@ ACE-Step lyrics are split into sections with tags on their own line, e.g. `[Intr
 
 ACE-Step cannot make a song whose end joins its beginning on its own: even with "seamless loop" in the prompt it
 tends to fade out at the end. When you ask for a loop, the agent adds loop-friendly tags (no intro, no outro, steady
-energy) and the server also writes `<name>_loop.wav`: the song is cut to whole bars and its last bar is blended into
-the first one, so the end flows into the beginning and it can repeat forever (like video game music). WAV is used
-because MP3 adds tiny silences at the edges that break gapless playback.
+energy) and you still get **one file**, `<name>.wav`, ready to loop: the song is cut to whole bars and its last
+bar is blended into the first one, so the end flows into the beginning and it can repeat forever (like video game
+music). WAV is used because MP3 adds tiny silences at the edges that break gapless playback.
 
 ### Tools
 
 | Tool | What it does |
 |---|---|
-| `acestep_status` | Is ACE-Step reachable? Loaded models, max length (e.g. "8 min"), max versions |
-| `acestep_ask_song_details` | Form (if supported) or list of questions for the user |
-| `acestep_generate` | Generates the song(s), optional seamless loop; returns file paths or a job id |
+| `acestep_status` | Is ACE-Step reachable? Loaded models, max length (e.g. "8 min"), max versions, available modes |
+| `acestep_ask_song_details` | The questions for the chosen mode (a form for Custom in clients that support it) |
+| `acestep_generate` | Generates in the chosen mode with the chosen file name, optional seamless loop; returns paths and folder, or a job id |
 | `acestep_get_result` | Waits for a running generation |
-| `acestep_list_songs` | Latest generated songs |
+| `acestep_list_songs` | Latest generated songs (to pick a source song for Remix/Repaint) |
+
+Simple mode and Custom without reference audio use ACE-Step's REST API; the modes with audio files use the
+generation function of ACE-Step's own page, whose parameters the server reads from the page every time.
 
 ## Notes
 

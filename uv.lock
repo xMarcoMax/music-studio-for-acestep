@@ -81,7 +81,7 @@ wheels = [
 
 [[package]]
 name = "music-studio-for-acestep"
-version = "1.0.0"
+version = "1.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "pillow" },

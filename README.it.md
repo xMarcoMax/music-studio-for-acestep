@@ -2,7 +2,7 @@
 
 [English](README.md) · **Italiano**
 
-Versione **1.0.0**
+Versione **1.1.0**
 
 Una piccola app per Windows che apre l'interfaccia web di [ACE-Step 1.5](https://github.com/ACE-Step/ACE-Step-1.5)
 (generazione musicale con IA, open source) in una finestra tutta sua, come un normale programma. Include anche
@@ -87,13 +87,19 @@ Cancella il file per tornare ai valori predefiniti.
 ## Usarla da un agente AI (MCP)
 
 **Music Studio MCP for ACE-Step** (`music-studio-mcp-for-ace-step`) permette a Claude Code, Codex e altri agenti AI
-di creare brani per te dalla chat: l'agente fa qualche domanda (stile, voce, durata indicativa con il massimo tra
-parentesi, loop facoltativo…), mostra un riepilogo e genera il brano tramite questa app.
+di creare brani per te dalla chat: l'agente chiede quale modalità usare (Simple, Custom, Remix, Repaint), fa qualche
+domanda (stile, voce, durata indicativa con il massimo tra parentesi, loop facoltativo, file audio…), mostra un
+riepilogo, chiede il nome del file e genera il brano tramite questa app.
 
 1. Lascia `"enable_api": true` in `config.json` (predefinito) e apri l'app.
 2. Nella cartella dell'app esegui `uv run mcp\install.py`: trova gli agenti AI installati sul PC e configura quelli
    che scegli.
 3. Riavvia gli agenti e chiedi, ad esempio, *"fammi un brano lo-fi di 1 minuto per studiare"*.
+
+> [!TIP]
+> **Solo con l'MCP: brani che si ripetono in loop senza stacchi.** Né ACE-Step né l'app lo permettono (ACE-Step
+> sfuma alla fine anche quando gli si chiede un loop). Chiedi all'agente un brano "che vada in loop all'infinito" —
+> ad esempio musica per videogiochi o di sottofondo — e ricevi un unico file `.wav` la cui fine scorre nell'inizio.
 
 Verificato con **Claude Code** e **Codex**; gli altri agenti (Claude Desktop, Gemini CLI, Copilot, Cursor, …) vengono
 configurati con il loro formato documentato e dovrebbero funzionare. Dettagli: [mcp/README.it.md](mcp/README.it.md).
@@ -106,9 +112,18 @@ in `logs\updates.log` lo storico degli aggiornamenti con gli hash dei commit.
 ## Controllo intelligente delle app di Windows
 
 L'eseguibile non è firmato digitalmente, quindi con il Controllo intelligente delle app attivo Windows molto
-probabilmente lo bloccherà dopo il download ("Un criterio di controllo dell'applicazione ha bloccato il file").
-In quel caso avvia l'app dal codice sorgente: `uv run python app.py` (oppure compilala tu con `build.ps1`).
-Non disattivare il Controllo intelligente delle app per questo.
+probabilmente lo bloccherà ("Un criterio di controllo dell'applicazione ha bloccato il file"). "Sblocca" nelle
+proprietà del file non serve. Avvia invece l'app dal codice sorgente — è la stessa app, avviata da Python:
+
+```powershell
+git clone <questo repository> music-studio-for-acestep
+cd music-studio-for-acestep
+powershell -ExecutionPolicy Bypass -File create_shortcut.ps1
+```
+
+Lo script prepara l'ambiente Python e mette sul desktop un collegamento **Music Studio for ACE-Step** con l'icona
+dell'app (avvia l'app con `pythonw.exe`, senza finestra della console). Non disattivare il Controllo intelligente
+delle app.
 
 ## Licenza e crediti
 

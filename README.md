@@ -2,7 +2,7 @@
 
 **English** · [Italiano](README.it.md)
 
-Version **1.0.0**
+Version **1.1.0**
 
 A small Windows app that runs the web interface of [ACE-Step 1.5](https://github.com/ACE-Step/ACE-Step-1.5)
 (open-source AI music generation) in its own window, as a normal desktop program. It also includes an
@@ -85,13 +85,19 @@ Delete the file to go back to the defaults.
 ## Use it from an AI agent (MCP)
 
 **Music Studio MCP for ACE-Step** (`music-studio-mcp-for-ace-step`) lets Claude Code, Codex and other AI agents
-create songs for you from a chat: the agent asks a few questions (style, vocals, approximate length with the
-maximum in brackets, optional seamless loop…), shows a summary and generates the song through this app.
+create songs for you from a chat: the agent asks which mode to use (Simple, Custom, Remix, Repaint), a few questions
+(style, vocals, approximate length with the maximum in brackets, optional seamless loop, audio files…), shows a
+summary, asks the file name and generates the song through this app.
 
 1. Keep `"enable_api": true` in `config.json` (default) and open the app.
 2. In the app folder run `uv run mcp\install.py`: it finds the AI agents installed on the PC and configures the ones
    you choose.
 3. Restart the agents and ask, e.g. *"make me a 1-minute lo-fi track to study with"*.
+
+> [!TIP]
+> **Only with the MCP: songs that loop seamlessly.** Neither ACE-Step nor the app can do it (ACE-Step fades out at
+> the end even when asked for a loop). Ask the agent for a song "that loops forever" — e.g. video game or background
+> music — and you get a single `.wav` whose end flows into its beginning.
 
 Verified with **Claude Code** and **Codex**; other agents (Claude Desktop, Gemini CLI, Copilot, Cursor, …) are
 configured with their documented format and should work. Details: [mcp/README.md](mcp/README.md).
@@ -104,8 +110,17 @@ configured with their documented format and should work. Details: [mcp/README.md
 ## Windows Smart App Control
 
 The executable is not code-signed, so with Smart App Control turned on Windows will most likely block it
-after download ("An app control policy blocked this file"). In that case run the app from source:
-`uv run python app.py` (or build it yourself with `build.ps1`). Do not turn Smart App Control off for this.
+("An app control policy blocked this file"). "Unblock" in the file properties does not help. Run the app from
+source instead — it is the same app, started by Python:
+
+```powershell
+git clone <this repository> music-studio-for-acestep
+cd music-studio-for-acestep
+powershell -ExecutionPolicy Bypass -File create_shortcut.ps1
+```
+
+The script prepares the Python environment and puts a **Music Studio for ACE-Step** shortcut with the app icon on
+your desktop (it starts the app with `pythonw.exe`, without a console window). Do not turn Smart App Control off.
 
 ## License and credits
 

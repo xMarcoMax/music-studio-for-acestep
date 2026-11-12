@@ -2,12 +2,18 @@
 
 [English](README.md) · **Italiano**
 
-Nome tecnico: `music-studio-mcp-for-ace-step` · Versione **1.0.0**
+Nome tecnico: `music-studio-mcp-for-ace-step` · Versione **1.1.0**
 
 Un server [MCP](https://modelcontextprotocol.io) che permette a un agente AI di creare musica con ACE-Step 1.5 sul tuo
-PC. Descrivi il brano in chat; l'agente ti fa qualche domanda (stile, voce, lingua, durata indicativa, loop…), scrive
-i tag di stile e il testo, ti mostra un riepilogo e, dopo il tuo OK, genera il brano tramite l'app
+PC. Descrivi il brano in chat; l'agente ti chiede quale modalità usare (Simple, Custom, Remix, Repaint…), ti fa
+qualche domanda (stile, voce, lingua, durata indicativa, loop, file audio…), scrive i tag di stile e il testo, ti
+mostra un riepilogo, ti chiede il nome del file e, dopo il tuo OK, genera il brano tramite l'app
 **Music Studio for ACE-Step**.
+
+> [!TIP]
+> **Esclusiva di questo MCP: brani che si ripetono in loop senza stacchi.** ACE-Step e l'app non possono crearli
+> (ACE-Step sfuma alla fine anche quando gli si chiede un loop); con l'MCP chiedi un brano "che vada in loop
+> all'infinito" e ricevi un unico `.wav` la cui fine scorre nell'inizio — vedi [Loop senza stacchi](#loop-senza-stacchi).
 
 ## Agenti supportati
 
@@ -108,22 +114,50 @@ VS Code usa `"servers"` con `"type": "stdio"`; GitHub Copilot CLI usa `"type": "
 ## Come si usa
 
 1. Apri Music Studio for ACE-Step e attendi la pagina di ACE-Step.
-2. Chiedi all'agente, ad esempio:
-   - *"Fammi un brano lo-fi rilassante di 1 minuto per studiare"*
+2. Chiedi all'agente con parole tue, senza bisogno di comandi speciali, ad esempio:
+   - *"Usa Music Studio per farmi un brano lo-fi rilassante di 1 minuto per studiare"*
    - *"Scrivi e genera una canzone pop italiana sull'estate, voce femminile, circa 2 minuti"*
-   - *"Musica di sottofondo per un livello di un platform, chiptune, deve andare in loop all'infinito"*
-3. L'agente controlla ACE-Step, poi chiede ciò che manca:
-   - stile, atmosfera e strumenti;
-   - voce e lingua;
-   - **durata indicativa con il massimo tra parentesi** (es. *"Durata? (max 8 min)"*), oppure lasci scegliere ACE-Step;
+   - *"Fai un remix di C:\Musica\mia-canzone.mp3 in versione folk acustica"*
+3. L'agente controlla ACE-Step e ti chiede quale **modalità** usare (salta la domanda se la tua richiesta lo dice già).
+4. Fa solo le domande di quella modalità:
+   - stile, voce e lingua;
+   - **durata indicativa con il massimo tra parentesi** (es. *"Durata? (max 8 min)"*), oppure la lasci scegliere ad ACE-Step;
    - **loop senza stacchi** (facoltativo);
    - tempo e tonalità;
-   - numero di versioni.
+   - numero di versioni;
+   - i file audio che servono alla modalità.
+5. Mostra una tabella di riepilogo e attende il tuo OK; poi, come **ultima domanda**, chiede il **nome del file**.
+6. Genera (un brano di 30–60 s richiede circa un minuto; l'app mostra una finestrella di avanzamento) e ti dice dove si
+   trovano i file.
 
-   I client che supportano i moduli MCP mostrano un modulo; gli altri fanno le domande in chat.
-4. Mostra una tabella di riepilogo; dopo il tuo OK genera (un brano di 30–60 s richiede circa un minuto) e ti dice
-   dove si trova il file: la cartella `gradio_outputs\mcp_<data>_<ora>\` di ACE-Step (*Apri cartella dei brani
-   generati* nel menu dell'app).
+### Modalità
+
+| Modalità | Cosa fa | Serve |
+|---|---|---|
+| **Simple** | Descrivi il brano a parole; ACE-Step sceglie stile, testo, durata, tempo e tonalità | — |
+| **Custom** | Controllo completo: stile, testo, durata, tempo, tonalità | **audio di riferimento** facoltativo per imitarne il suono |
+| **Remix** | Trasforma un brano esistente in un altro stile mantenendone struttura e melodia (fedeltà 0.2 libera – 0.8 fedele) | un **brano di partenza** |
+| **Repaint** | Rigenera solo un tratto (dal secondo X al secondo Y) e lascia intatto il resto | un **brano di partenza** |
+| **Extract** | Isola uno strumento o la voce | un brano di partenza, solo **modelli base** |
+| **Lego** | Aggiunge o sostituisce una traccia (es. batteria) | un brano di partenza, solo **modelli base** |
+| **Complete** | Aggiunge gli strumenti mancanti a un brano parziale | un brano di partenza, solo **modelli base** |
+
+Extract, Lego e Complete compaiono solo quando ACE-Step usa un modello *base* (il modello turbo offre le prime quattro).
+
+### File audio (brano di partenza, audio di riferimento)
+
+L'agente non può leggere i file allegati in chat: quando te lo chiede **incolla il percorso completo** del file, ad
+esempio `C:\Users\Nome\Musica\canzone.mp3` (negli agenti da terminale puoi trascinare il file nella finestra e il
+percorso si scrive da solo). Puoi anche chiedere all'agente di **elencare i tuoi brani recenti** e sceglierne uno
+come brano di partenza.
+
+### Nomi dei file e dove vengono salvati i brani
+
+ACE-Step dà ai file nomi casuali; il server rinomina il brano con il nome che scegli. Un brano = **un solo file**,
+`<nome>.mp3` (`<nome>.wav` per un loop). Solo se chiedi più versioni dello stesso brano le altre si chiamano
+`<nome>_2.mp3`, `<nome>_3.mp3`, … Vengono salvati nella cartella dei risultati di ACE-Step, in
+`gradio_outputs\mcp_<data>_<ora>_<nome>\` (insieme ai file accessori di ACE-Step); l'agente ti dice il percorso
+completo, e *Apri cartella dei brani generati* nel menu dell'app apre `gradio_outputs`.
 
 Alcuni client offrono anche il prompt pronto **compose_song** (in Claude Code: `/mcp__music-studio-mcp-for-ace-step__compose_song`).
 
@@ -145,19 +179,23 @@ Nei testi di ACE-Step le sezioni sono indicate da tag su una riga a sé, ad esem
 
 ACE-Step da solo non riesce a creare un brano la cui fine si attacchi all'inizio: anche con "seamless loop" nel prompt
 tende a sfumare alla fine. Quando chiedi un loop, l'agente aggiunge i tag adatti (niente intro, niente finale, energia
-costante) e il server crea anche `<nome>_loop.wav`. Il brano viene tagliato a battute intere e la sua ultima battuta
-viene fusa con la prima, così la fine scorre nell'inizio e si può ripetere all'infinito (come la musica dei
-videogiochi). Si usa il WAV perché l'MP3 aggiunge piccoli silenzi ai bordi che rovinano la ripetizione continua.
+costante) e ricevi comunque **un solo file**, `<nome>.wav`, già pronto per il loop: il brano viene tagliato a battute
+intere e la sua ultima battuta viene fusa con la prima, così la fine scorre nell'inizio e si può ripetere
+all'infinito (come la musica dei videogiochi). Si usa il WAV perché l'MP3 aggiunge piccoli silenzi ai bordi che
+rovinano la ripetizione continua.
 
 ### Strumenti
 
 | Strumento | Cosa fa |
 |---|---|
-| `acestep_status` | ACE-Step è raggiungibile? Modelli caricati, durata massima (es. "8 min"), versioni massime |
-| `acestep_ask_song_details` | Modulo (se supportato) o elenco di domande per l'utente |
-| `acestep_generate` | Genera il brano (o i brani), loop facoltativo; restituisce i percorsi dei file o un job id |
+| `acestep_status` | ACE-Step è raggiungibile? Modelli caricati, durata massima (es. "8 min"), versioni massime, modalità disponibili |
+| `acestep_ask_song_details` | Le domande per la modalità scelta (un modulo per Custom nei client che lo supportano) |
+| `acestep_generate` | Genera nella modalità scelta con il nome scelto, loop facoltativo; restituisce percorsi e cartella, oppure un job id |
 | `acestep_get_result` | Attende una generazione in corso |
-| `acestep_list_songs` | Ultimi brani generati |
+| `acestep_list_songs` | Ultimi brani generati (per scegliere il brano di partenza di Remix/Repaint) |
+
+La modalità Simple e Custom senza audio di riferimento usano l'API REST di ACE-Step; le modalità con file audio usano
+la funzione di generazione della pagina di ACE-Step, i cui parametri il server rilegge dalla pagina ogni volta.
 
 ## Note
 

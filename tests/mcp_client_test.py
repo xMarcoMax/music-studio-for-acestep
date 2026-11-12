@@ -2,7 +2,7 @@
 
 Usage: uv run --no-project --with "mcp>=2.3,<3" python tests/mcp_client_test.py [--generate] [--loop] [--form] [--dist]
   --generate  really generate a 15 s instrumental (the Music Studio app must be open)
-  --loop      really generate a loopable track and check that the _loop.wav joins seamlessly
+  --loop      really generate a loopable track and check that ONE <name>.wav is delivered and joins seamlessly
   --form      advertise elicitation support and auto-fill the form
   --dist      use the copy shipped next to the exe (dist\\Music Studio\\mcp)
 """
@@ -77,16 +77,47 @@ async def main():
                 f = Path(song["file"])
                 assert f.is_file() and "gradio_outputs" in str(f), f
                 print("OK file:", f, f.stat().st_size)
+            if "--modes" in sys.argv:  # Custom + reference, Remix, Repaint through the page API, with file names
+                st = show("status", await s.call_tool("acestep_status", {}))
+                print("modes:", [(m["mode"], m["available"]) for m in st["modes"]])
+                show("ask remix", await s.call_tool("acestep_ask_song_details", {"mode": "remix"}))
+                show("missing source", await s.call_tool("acestep_generate", {"mode": "remix", "caption": "jazz"}))
+                show("bad path", await s.call_tool("acestep_generate", {"mode": "remix", "caption": "jazz",
+                                                                        "source_audio": r"C:\nope\x.mp3"}))
+                base = await generate(s, {"caption": "upbeat funk, slap bass, brass stabs, tight drums",
+                                          "instrumental": True, "duration_seconds": 20, "bpm": 110,
+                                          "file_name": "test-base"})
+                src = base["file"]
+                assert Path(src).name == "test-base.mp3", src
+                cases = [
+                    ("ref", {"mode": "custom", "caption": "dreamy synthwave, retro pads, gated drums",
+                             "instrumental": True, "duration_seconds": 15, "reference_audio": src,
+                             "file_name": "test-ref"}),
+                    ("remix", {"mode": "remix", "caption": "acoustic folk, fingerpicked guitar, soft percussion",
+                               "instrumental": True, "source_audio": f'"{src}"', "remix_strength": 0.6,
+                               "file_name": "test-remix"}),
+                    ("repaint", {"mode": "repaint", "caption": "drum solo, energetic fills",
+                                 "instrumental": True, "source_audio": src, "repaint_start": 8, "repaint_end": 14,
+                                 "file_name": "test:repaint?"}),
+                ]
+                for name, args in cases:
+                    song = await generate(s, args)
+                    f = Path(song["file"])
+                    assert f.is_file() and f.stem.startswith("test-"), f
+                    print(f"OK {name}: {f} ({song.get('duration_seconds')} s)")
             if "--loop" in sys.argv:
                 song = await generate(s, {
                     "caption": "chiptune video game level music, upbeat, seamless loop, loopable, steady energy, "
                                "no intro, no outro, no fade in, no fade out",
                     "instrumental": True, "duration_seconds": 24, "bpm": 120, "time_signature": "4",
-                    "make_loop": True})
-                assert song.get("loop_file"), song
-                length = seam_check(song["loop_file"])
+                    "make_loop": True, "file_name": "test-loop"})
+                f = Path(song["file"])
+                assert song.get("seamless_loop") and f.name == "test-loop.wav", song
+                audio = [p.name for p in f.parent.iterdir() if p.suffix.lower() in (".mp3", ".wav", ".flac")]
+                assert audio == ["test-loop.wav"], f"a loop request must deliver one audio file, got {audio}"
+                length = seam_check(str(f))
                 assert abs(length / 2.0 - round(length / 2.0)) < 0.02, "loop is not a whole number of bars"
-                print("OK loop:", song["loop_file"])
+                print("OK loop:", f)
 
 
 asyncio.run(main())
