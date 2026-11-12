@@ -203,16 +203,19 @@ def edit_continue_yaml(path: Path, uv: str | None, dry: bool) -> str:
     """Continue's config.yaml: `mcpServers` is a list of items with a `name`. Our item is added/removed as a
     self-contained block of lines, without rewriting the rest of the user's file."""
     lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
-    # remove our previous item (from its "- name:" line to the next item or the next top-level key)
-    out, skip = [], False
+    # remove our previous item: its "- name:" line and every deeper-indented line after it (its args list too),
+    # up to the next item at the same level or a top-level key
+    out, item_indent = [], None
     for ln in lines:
-        if re.match(r"^\s*-\s+name:\s*['\"]?%s['\"]?\s*$" % re.escape(NAME), ln):
-            skip = True
+        m = re.match(r"^(\s*)-\s+name:\s*['\"]?%s['\"]?\s*$" % re.escape(NAME), ln)
+        if m:
+            item_indent = len(m.group(1))
             continue
-        if skip and (re.match(r"^\s*-\s", ln) or re.match(r"^\S", ln)):
-            skip = False
-        if not skip:
-            out.append(ln)
+        if item_indent is not None:
+            if not ln.strip() or len(ln) - len(ln.lstrip()) > item_indent:
+                continue
+            item_indent = None
+        out.append(ln)
     if uv:
         cmd, args = server_command(uv)
         item = [f"  - name: {NAME}", "    type: stdio", f"    command: {yaml_str(cmd)}", "    args:"]

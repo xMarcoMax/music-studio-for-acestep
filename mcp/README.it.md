@@ -2,7 +2,7 @@
 
 [English](README.md) · **Italiano**
 
-Nome tecnico: `music-studio-mcp-for-ace-step` · Versione **1.1.0**
+Nome tecnico: `music-studio-mcp-for-ace-step` · Versione **1.1.1**
 
 Un server [MCP](https://modelcontextprotocol.io) che permette a un agente AI di creare musica con ACE-Step 1.5 sul tuo
 PC. Descrivi il brano in chat; l'agente ti chiede quale modalità usare (Simple, Custom, Remix, Repaint…), ti fa

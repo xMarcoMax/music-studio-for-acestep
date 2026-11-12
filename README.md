@@ -2,7 +2,7 @@
 
 **English** · [Italiano](README.it.md)
 
-Version **1.1.0**
+Version **1.1.1**
 
 A small Windows app that runs the web interface of [ACE-Step 1.5](https://github.com/ACE-Step/ACE-Step-1.5)
 (open-source AI music generation) in its own window, as a normal desktop program. It also includes an

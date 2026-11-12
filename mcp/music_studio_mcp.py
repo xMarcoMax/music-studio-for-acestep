@@ -38,7 +38,7 @@ from pydantic import Field, create_model
 
 from mcp.server.mcpserver import AcceptedElicitation, Context, MCPServer
 
-VERSION = "1.1.0"  # same as version.py of the app
+VERSION = "1.1.1"  # same as version.py of the app
 HERE = Path(__file__).resolve().parent
 DEFAULT_URL = "http://127.0.0.1:7860"
 WAIT_SECONDS = 45  # return a job id instead of blocking longer: some clients time out tool calls around 60 s
