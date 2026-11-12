@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+build/
+dist/
+logs/
+webview_data/
+testenv/
+tests/out/
+config.json
+server_info.json
+*.spec
+*.bak-*
+NOTE-SVILUPPO.md
+SPECIFICHE.md
+CLAUDE.md

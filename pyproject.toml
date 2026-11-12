@@ -1,0 +1,20 @@
+﻿[project]
+name = "music-studio-for-acestep"
+version = "1.0.0"
+description = "Windows desktop app for the ACE-Step 1.5 web UI (pywebview + WebView2), with an MCP server for AI agents"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "pillow>=13.0.0",
+    "psutil>=7.2.2",
+    "pywebview>=6.2.1",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.22.3",
+    "websocket-client>=1.9.2",
+]
+
+[tool.uv]
+package = false
